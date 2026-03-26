@@ -1,0 +1,9 @@
+{
+  "name": "command-atlas",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:api && npm run test:e2e",
+    "test:api": "cd api && npm run test",
+    "test:e2e": "cd app && npm run test:e2e"
+  }
+}

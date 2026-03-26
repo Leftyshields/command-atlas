@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id              String    @id @default(cuid())
+  name            String
+  title           String?
+  team            String?
+  department      String?
+  notes           String?
+  managerId       String?   @map("manager_id")
+  manager         Person?   @relation("ReportsTo", fields: [managerId], references: [id])
+  directReports   Person[]  @relation("ReportsTo")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+}
+
+model System {
+  id          String   @id @default(cuid())
+  name        String
+  category    String?
+  ownerTeam   String?  @map("owner_team")
+  description String?
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
+
+model Observation {
+  id              String   @id @default(cuid())
+  title           String?
+  observation     String
+  whyItMatters    String?  @map("why_it_matters")
+  context         String?
+  observationType  String?  @map("observation_type")
+  capturedAt      DateTime @default(now()) @map("captured_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+}
+
+model Relationship {
+  id               String   @id @default(cuid())
+  sourceEntityType String   @map("source_entity_type")
+  sourceEntityId   String   @map("source_entity_id")
+  targetEntityType String   @map("target_entity_type")
+  targetEntityId   String   @map("target_entity_id")
+  relationshipType String   @map("relationship_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([sourceEntityType, sourceEntityId])
+  @@index([targetEntityType, targetEntityId])
+}

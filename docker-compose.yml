@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: ./api
+    expose:
+      - "4000"
+    environment:
+      DATABASE_URL: "file:./prisma/dev.db"
+      PORT: "4000"
+      FRONTEND_ORIGIN: "http://localhost:5173"
+      OBSIDIAN_VAULT_ROOT: "/obsidian-vault"
+    volumes:
+      - api_sqlite_data:/app/prisma
+      - ./obsidian-vault:/obsidian-vault
+
+  app:
+    build:
+      context: ./app
+    ports:
+      - "${APP_PORT:-5173}:5173"
+    environment:
+      VITE_API_PROXY_TARGET: "http://api:4000"
+    depends_on:
+      - api
+
+volumes:
+  api_sqlite_data:
