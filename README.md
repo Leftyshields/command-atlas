@@ -75,6 +75,20 @@ npm run dev   # starts Vite on http://localhost:5173, proxies /api to API
 
 Open http://localhost:5173. Use **Capture** to add observations; add **People** and **Systems** first to link from observations.
 
+## Observations and toil tracking
+
+Observations hold the main text plus optional metadata (title, **observation type**, links to people/systems). You can also record **operational toil** so repetitive or scaling manual work is easier to spot later:
+
+| Concept | In the UI | Notes |
+|--------|-----------|--------|
+| What happened / the work | **The Manual Action** | Required body text in quick capture. |
+| Why it matters | **The Toil Cost (Impact)** | Optional; maps to `whyItMatters`. |
+| Where it came from | **The Trigger/Catalyst** | Optional; maps to `context`. |
+| Category of toil | **Toil type** | Optional dropdown (e.g. Manual Deployment/Release, Incident Firefighting, Handoff/Ticket Friction). |
+| Subjective severity | **Friction score** | Optional **1–5**; clearable in the editor. |
+
+Set these in **Quick Capture** or when **editing** an observation on its detail page. **Obsidian export** includes toil type and friction score in generated observation notes when present.
+
 ## Obsidian export (MVP)
 
 - Scope: **manual**, **one-way** export from Command Atlas -> Obsidian.
