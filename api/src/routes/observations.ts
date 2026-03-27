@@ -26,6 +26,17 @@ const toilTypeSchema = z.enum(TOIL_TYPE_VALUES).nullish();
 
 const frictionScoreSchema = z.number().int().min(1).max(5).nullish();
 
+/** JSON PATCH bodies often send explicit `null` for cleared fields; `z.string().optional()` rejects null. */
+const optionalNullableTrimmedString = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((s) => {
+    if (s === undefined) return undefined;
+    if (s === null) return null;
+    const t = s.trim();
+    return t === "" ? null : t;
+  });
+
 const observationCreateSchema = z.object({
   observation: z
     .string({ required_error: "observation is required" })
@@ -44,9 +55,9 @@ const observationCreateSchema = z.object({
 
 const observationPatchSchema = z.object({
   observation: z.string().max(OBS_TEXT_MAX_LENGTH).transform((s) => s.trim()).optional(),
-  title: z.string().optional().transform((s) => (s != null ? s.trim() : undefined)),
-  whyItMatters: z.string().optional().transform((s) => (s != null ? s.trim() : undefined)),
-  context: z.string().optional().transform((s) => (s != null ? s.trim() : undefined)),
+  title: optionalNullableTrimmedString,
+  whyItMatters: optionalNullableTrimmedString,
+  context: optionalNullableTrimmedString,
   capturedAt: z.union([z.string(), z.date()]).optional(),
   observationType: observationTypeSchema,
   toilType: toilTypeSchema,

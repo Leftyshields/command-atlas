@@ -106,6 +106,26 @@ describe("Observations", () => {
     expect(res.body.title).toBe("New title");
   });
 
+  it("PATCH /api/observations/:id - accepts JSON null for title/whyItMatters/context (matches browser JSON.stringify)", async () => {
+    const created = await api.post("/api/observations").send({
+      observation: "Body",
+      title: "T",
+      whyItMatters: "W",
+      context: "C",
+    });
+    const id = created.body.id;
+    const res = await api.patch(`/api/observations/${id}`).send({
+      observation: "Body",
+      title: null,
+      whyItMatters: null,
+      context: null,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBeNull();
+    expect(res.body.whyItMatters).toBeNull();
+    expect(res.body.context).toBeNull();
+  });
+
   it("PATCH /api/observations/:id - omitting link keys leaves links unchanged", async () => {
     const person = await api.post("/api/people").send({ name: "PATCH Test Person" });
     const sys = await api.post("/api/systems").send({ name: "PATCH Test System" });
