@@ -5,12 +5,14 @@ services:
     expose:
       - "4000"
     environment:
-      DATABASE_URL: "file:./prisma/dev.db"
+      # DB file lives only under /app/sqlite (volume). Do NOT mount over /app/prisma — that hides
+      # schema.prisma + migrations from the image and prisma generate can produce a stale client (e.g. missing toilType).
+      DATABASE_URL: "file:./sqlite/dev.db"
       PORT: "4000"
       FRONTEND_ORIGIN: "http://localhost:5173"
       OBSIDIAN_VAULT_ROOT: "/obsidian-vault"
     volumes:
-      - api_sqlite_data:/app/prisma
+      - api_sqlite_data:/app/sqlite
       - ./obsidian-vault:/obsidian-vault
 
   app:

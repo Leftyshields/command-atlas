@@ -9,7 +9,7 @@ test.describe("Fast capture", () => {
     await captureBtn(page).waitFor({ state: "visible" });
     await captureBtn(page).click();
     await expect(page.getByText("Quick capture")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByPlaceholder("What did you notice?")).toBeVisible();
+    await expect(page.getByPlaceholder("Describe the manual work or steps")).toBeVisible();
   });
 
   test("Submit with empty observation shows validation", async ({ page }) => {
@@ -18,16 +18,16 @@ test.describe("Fast capture", () => {
     await captureBtn(page).click();
     await expect(page.getByText("Quick capture")).toBeVisible({ timeout: 5000 });
     // Fill spaces so form submits (textarea has required) but our validation rejects
-    await page.getByPlaceholder("What did you notice?").fill("   ");
+    await page.getByPlaceholder("Describe the manual work or steps").fill("   ");
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText("Observation is required.")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText("The manual action is required.")).toBeVisible({ timeout: 3000 });
   });
 
   test("Create observation with only text closes modal and creates", async ({ page }) => {
     const text = `E2E test observation ${Date.now()}`;
     await page.goto("/");
     await captureBtn(page).click();
-    await page.getByPlaceholder("What did you notice?").fill(text);
+    await page.getByPlaceholder("Describe the manual work or steps").fill(text);
     await page.getByRole("button", { name: "Save" }).click();
     await page.goto("/observations");
     await expect(page.getByText(text)).toBeVisible({ timeout: 15000 });
@@ -36,7 +36,7 @@ test.describe("Fast capture", () => {
   test("Cancel closes modal without saving", async ({ page }) => {
     await page.goto("/");
     await captureBtn(page).click();
-    await page.getByPlaceholder("What did you notice?").fill("Will not save");
+    await page.getByPlaceholder("Describe the manual work or steps").fill("Will not save");
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(page.getByText("Quick capture")).not.toBeVisible({ timeout: 3000 });
     await page.goto("/observations");
@@ -55,7 +55,7 @@ test.describe("Fast capture", () => {
     await page.getByRole("button", { name: "Save and link" }).click();
     await expect(page.getByPlaceholder("Full name")).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByText(personName)).toBeVisible();
-    await page.getByPlaceholder("What did you notice?").fill(obsText);
+    await page.getByPlaceholder("Describe the manual work or steps").fill(obsText);
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Quick capture")).not.toBeVisible({ timeout: 5000 });
     await page.goto("/observations");

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { OBSERVATION_TYPE_OPTIONS, getObservationTypeOption } from "../../constants/observationTypes";
+import { TOIL_TYPE_OPTIONS } from "../../constants/toilTypes";
 import { api } from "../../lib/api";
 import type { Person, System } from "../../types";
 
@@ -22,6 +23,8 @@ export function FastCaptureModal({ open, onClose, onSuccess }: FastCaptureModalP
   const [linkedSystemIds, setLinkedSystemIds] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [observationType, setObservationType] = useState("");
+  const [toilType, setToilType] = useState("");
+  const [frictionScore, setFrictionScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -76,13 +79,15 @@ export function FastCaptureModal({ open, onClose, onSuccess }: FastCaptureModalP
     setLinkedSystemIds([]);
     setTitle("");
     setObservationType("");
+    setToilType("");
+    setFrictionScore(null);
     setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observation.trim()) {
-      setError("Observation is required.");
+      setError("The manual action is required.");
       return;
     }
     setLoading(true);
@@ -95,6 +100,8 @@ export function FastCaptureModal({ open, onClose, onSuccess }: FastCaptureModalP
         capturedAt: new Date().toISOString(),
         title: title.trim() || undefined,
         observationType: observationType.trim() || undefined,
+        toilType: toilType.trim() || undefined,
+        frictionScore: frictionScore ?? undefined,
         linkedPersonIds,
         linkedSystemIds,
       });
@@ -155,18 +162,62 @@ export function FastCaptureModal({ open, onClose, onSuccess }: FastCaptureModalP
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Observation *</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Toil Type</label>
+            <select
+              value={toilType}
+              onChange={(e) => setToilType(e.target.value)}
+              className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+            >
+              <option value="">None</option>
+              {TOIL_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <fieldset className="border-0 p-0 m-0 min-w-0">
+            <legend className="block text-sm font-medium text-slate-700 mb-1">Friction Score (1-5)</legend>
+            <p className="text-slate-500 text-xs mb-2">
+              1 (Minor Annoyance) → 5 (Systemic Blocker)
+            </p>
+            <div className="flex flex-wrap gap-3 items-center">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <label key={n} className="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="frictionScore"
+                    checked={frictionScore === n}
+                    onChange={() => setFrictionScore(n)}
+                    className="border-slate-300"
+                  />
+                  {n}
+                </label>
+              ))}
+              {frictionScore != null && (
+                <button
+                  type="button"
+                  onClick={() => setFrictionScore(null)}
+                  className="text-xs text-slate-600 hover:text-slate-900 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </fieldset>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">The Manual Action *</label>
             <textarea
               value={observation}
               onChange={(e) => setObservation(e.target.value)}
               required
               rows={3}
               className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
-              placeholder="What did you notice?"
+              placeholder="Describe the manual work or steps"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Why it matters</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">The Toil Cost (Impact)</label>
             <textarea
               value={whyItMatters}
               onChange={(e) => setWhyItMatters(e.target.value)}
@@ -175,7 +226,7 @@ export function FastCaptureModal({ open, onClose, onSuccess }: FastCaptureModalP
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Context</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">The Trigger/Catalyst</label>
             <input
               type="text"
               value={context}

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ObservationTypeBadge } from "../components/ObservationTypeBadge";
 import { SafeMarkdown } from "../components/SafeMarkdown";
 import { OBSERVATION_TYPE_OPTIONS } from "../constants/observationTypes";
+import { TOIL_TYPE_OPTIONS } from "../constants/toilTypes";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api } from "../lib/api";
 import type { Observation } from "../types";
@@ -21,7 +22,15 @@ export function ObservationDetail() {
     enabled: !!id,
   });
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ observation: "", whyItMatters: "", context: "", title: "", observationType: "" });
+  const [form, setForm] = useState({
+    observation: "",
+    whyItMatters: "",
+    context: "",
+    title: "",
+    observationType: "",
+    toilType: "",
+    frictionScore: null as number | null,
+  });
 
   const patch = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.patch<Observation>(`/observations/${id!}`, body),
@@ -40,7 +49,16 @@ export function ObservationDetail() {
   });
 
   useEffect(() => {
-    if (obs) setForm({ observation: obs.observation, whyItMatters: obs.whyItMatters ?? "", context: obs.context ?? "", title: obs.title ?? "", observationType: obs.observationType ?? "" });
+    if (obs)
+      setForm({
+        observation: obs.observation,
+        whyItMatters: obs.whyItMatters ?? "",
+        context: obs.context ?? "",
+        title: obs.title ?? "",
+        observationType: obs.observationType ?? "",
+        toilType: obs.toilType ?? "",
+        frictionScore: obs.frictionScore ?? null,
+      });
   }, [obs]);
 
   if (!id || isLoading || error) {
@@ -79,21 +97,11 @@ export function ObservationDetail() {
               context: form.context || null,
               title: form.title || null,
               observationType: form.observationType || null,
+              toilType: form.toilType || null,
+              frictionScore: form.frictionScore,
             });
           }}
         >
-          <div>
-            <label className="block text-sm font-medium mb-1">Observation</label>
-            <textarea value={form.observation} onChange={(e) => setForm((p) => ({ ...p, observation: e.target.value }))} required rows={4} className="w-full border rounded px-2 py-1.5 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Why it matters</label>
-            <textarea value={form.whyItMatters} onChange={(e) => setForm((p) => ({ ...p, whyItMatters: e.target.value }))} rows={2} className="w-full border rounded px-2 py-1.5 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Context</label>
-            <input value={form.context} onChange={(e) => setForm((p) => ({ ...p, context: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" />
-          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Observation type</label>
             <select
@@ -110,6 +118,60 @@ export function ObservationDetail() {
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium mb-1">Toil type</label>
+            <select
+              value={form.toilType}
+              onChange={(e) => setForm((p) => ({ ...p, toilType: e.target.value }))}
+              className="w-full border rounded px-2 py-1.5 text-sm bg-white"
+            >
+              <option value="">None</option>
+              {TOIL_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <fieldset className="border-0 p-0 min-w-0">
+            <legend className="block text-sm font-medium mb-1">Friction score (1-5)</legend>
+            <p className="text-slate-500 text-xs mb-2">1 (Minor Annoyance) → 5 (Systemic Blocker)</p>
+            <div className="flex flex-wrap gap-3 items-center">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <label key={n} className="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="editFrictionScore"
+                    checked={form.frictionScore === n}
+                    onChange={() => setForm((p) => ({ ...p, frictionScore: n }))}
+                    className="border-slate-300"
+                  />
+                  {n}
+                </label>
+              ))}
+              {form.frictionScore != null && (
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, frictionScore: null }))}
+                  className="text-xs text-slate-600 hover:text-slate-900 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </fieldset>
+          <div>
+            <label className="block text-sm font-medium mb-1">The Manual Action</label>
+            <textarea value={form.observation} onChange={(e) => setForm((p) => ({ ...p, observation: e.target.value }))} required rows={4} className="w-full border rounded px-2 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">The Toil Cost (Impact)</label>
+            <textarea value={form.whyItMatters} onChange={(e) => setForm((p) => ({ ...p, whyItMatters: e.target.value }))} rows={2} className="w-full border rounded px-2 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">The Trigger/Catalyst</label>
+            <input value={form.context} onChange={(e) => setForm((p) => ({ ...p, context: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" />
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1">Title</label>
             <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" />
           </div>
@@ -117,16 +179,35 @@ export function ObservationDetail() {
         </form>
       ) : (
         <>
+          {(obs.toilType || obs.frictionScore != null) && (
+            <div className="text-sm text-slate-700 space-y-1 border border-slate-200 rounded-md p-3 bg-slate-50">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Toil tracking</h3>
+              {obs.toilType && (
+                <p>
+                  <span className="font-medium text-slate-800">Toil type:</span> {obs.toilType}
+                </p>
+              )}
+              {obs.frictionScore != null && (
+                <p>
+                  <span className="font-medium text-slate-800">Friction score:</span> {obs.frictionScore} / 5
+                </p>
+              )}
+            </div>
+          )}
           <div className="prose prose-sm max-w-none">
             <SafeMarkdown>{obs.observation}</SafeMarkdown>
           </div>
           {obs.whyItMatters && (
             <div>
-              <h3 className="text-sm font-medium text-slate-700">Why it matters</h3>
+              <h3 className="text-sm font-medium text-slate-700">The Toil Cost (Impact)</h3>
               <div className="prose prose-sm max-w-none"><SafeMarkdown>{obs.whyItMatters}</SafeMarkdown></div>
             </div>
           )}
-          {obs.context && <p className="text-slate-600 text-sm">Context: {obs.context}</p>}
+          {obs.context && (
+            <p className="text-slate-600 text-sm">
+              <span className="font-medium text-slate-700">The Trigger/Catalyst:</span> {obs.context}
+            </p>
+          )}
           {(obs.linkedPeople?.length ?? 0) > 0 && (
             <div>
               <h3 className="text-sm font-medium text-slate-700">Linked people</h3>

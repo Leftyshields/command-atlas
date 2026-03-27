@@ -21,7 +21,7 @@ test.describe("Search", () => {
     const phrase = `UniqueSearchable${Date.now()}`;
     await page.goto("/");
     await page.getByRole("banner").getByRole("button", { name: "Capture" }).click();
-    await page.getByPlaceholder("What did you notice?").fill(phrase);
+    await page.getByPlaceholder("Describe the manual work or steps").fill(phrase);
     await page.getByRole("button", { name: "Save" }).click();
     await page.goto("/search");
     await page.getByPlaceholder(/min 2 chars/i).fill("UniqueSearchable");

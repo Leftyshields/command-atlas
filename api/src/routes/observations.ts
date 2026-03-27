@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
+import { TOIL_TYPE_VALUES } from "../constants/toilTypes.js";
 import { logError } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -21,6 +22,10 @@ const observationTypeSchema = z
   .enum(OBSERVATION_TYPE_VALUES)
   .nullish();
 
+const toilTypeSchema = z.enum(TOIL_TYPE_VALUES).nullish();
+
+const frictionScoreSchema = z.number().int().min(1).max(5).nullish();
+
 const observationCreateSchema = z.object({
   observation: z
     .string({ required_error: "observation is required" })
@@ -31,6 +36,8 @@ const observationCreateSchema = z.object({
   context: z.string().optional().transform((s) => (s != null && s !== "" ? s.trim() : undefined)),
   capturedAt: z.union([z.string(), z.date()]).optional(),
   observationType: observationTypeSchema,
+  toilType: toilTypeSchema,
+  frictionScore: frictionScoreSchema,
   linkedPersonIds: z.array(z.string()).optional(),
   linkedSystemIds: z.array(z.string()).optional(),
 });
@@ -42,6 +49,8 @@ const observationPatchSchema = z.object({
   context: z.string().optional().transform((s) => (s != null ? s.trim() : undefined)),
   capturedAt: z.union([z.string(), z.date()]).optional(),
   observationType: observationTypeSchema,
+  toilType: toilTypeSchema,
+  frictionScore: frictionScoreSchema,
   linkedPersonIds: z.array(z.string()).optional(),
   linkedSystemIds: z.array(z.string()).optional(),
 });
@@ -97,21 +106,40 @@ observationsRouter.post("/", async (req, res) => {
       const flat = parsed.error.flatten();
       const obsMsg = flat.fieldErrors.observation?.[0];
       const typeMsg = flat.fieldErrors.observationType?.[0];
+      const toilMsg = flat.fieldErrors.toilType?.[0];
+      const frictionMsg = flat.fieldErrors.frictionScore?.[0];
       const message =
         typeof obsMsg === "string"
           ? (obsMsg.includes("expected string, received undefined") ? "observation is required" : obsMsg)
           : typeof typeMsg === "string"
             ? typeMsg
-            : (flat.formErrors[0] ?? "Validation failed");
+            : typeof toilMsg === "string"
+              ? toilMsg
+              : typeof frictionMsg === "string"
+                ? frictionMsg
+                : (flat.formErrors[0] ?? "Validation failed");
       return res.status(400).json({ error: typeof message === "string" ? message : "Validation failed" });
     }
-    const { observation, title, whyItMatters, context, capturedAt, observationType, linkedPersonIds, linkedSystemIds } = parsed.data;
+    const {
+      observation,
+      title,
+      whyItMatters,
+      context,
+      capturedAt,
+      observationType,
+      toilType,
+      frictionScore,
+      linkedPersonIds,
+      linkedSystemIds,
+    } = parsed.data;
     const createData: Prisma.ObservationCreateInput = {
       observation,
       title: title ?? null,
       whyItMatters: whyItMatters ?? null,
       context: context ?? null,
       observationType: observationType ?? null,
+      toilType: toilType ?? null,
+      frictionScore: frictionScore ?? null,
     };
     if (capturedAt !== undefined && capturedAt !== null) {
       const d = new Date(capturedAt);
@@ -162,21 +190,40 @@ observationsRouter.patch("/:id", async (req, res) => {
       const flat = parsed.error.flatten();
       const typeMsg = flat.fieldErrors.observationType?.[0];
       const obsMsg = flat.fieldErrors.observation?.[0];
+      const toilMsg = flat.fieldErrors.toilType?.[0];
+      const frictionMsg = flat.fieldErrors.frictionScore?.[0];
       const message =
         typeof typeMsg === "string"
           ? typeMsg
           : typeof obsMsg === "string"
             ? obsMsg
-            : (flat.formErrors[0] ?? "Validation failed");
+            : typeof toilMsg === "string"
+              ? toilMsg
+              : typeof frictionMsg === "string"
+                ? frictionMsg
+                : (flat.formErrors[0] ?? "Validation failed");
       return res.status(400).json({ error: typeof message === "string" ? message : "Validation failed" });
     }
-    const { observation, title, whyItMatters, context, capturedAt, observationType, linkedPersonIds, linkedSystemIds } = parsed.data;
+    const {
+      observation,
+      title,
+      whyItMatters,
+      context,
+      capturedAt,
+      observationType,
+      toilType,
+      frictionScore,
+      linkedPersonIds,
+      linkedSystemIds,
+    } = parsed.data;
     const data: Prisma.ObservationUpdateInput = {};
     if (observation !== undefined) data.observation = observation;
     if (title !== undefined) data.title = title ?? null;
     if (whyItMatters !== undefined) data.whyItMatters = whyItMatters ?? null;
     if (context !== undefined) data.context = context ?? null;
     if (observationType !== undefined) data.observationType = observationType ?? null;
+    if (toilType !== undefined) data.toilType = toilType ?? null;
+    if (frictionScore !== undefined) data.frictionScore = frictionScore ?? null;
     if (capturedAt !== undefined) {
       const d = new Date(capturedAt);
       if (Number.isNaN(d.getTime())) {

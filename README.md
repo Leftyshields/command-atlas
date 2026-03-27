@@ -42,7 +42,7 @@ docker compose logs -f
 
 ### Docker persistence
 
-- SQLite data persists in named volume `api_sqlite_data` mounted at `/app/prisma` in the API container.
+- SQLite data persists in named volume `api_sqlite_data` mounted at `/app/sqlite` in the API container (`DATABASE_URL` points at `sqlite/dev.db`). The `prisma/` directory is **not** overlaid by a volume so `schema.prisma` and migrations from the image stay visible and `prisma generate` stays in sync with the schema.
 - Obsidian direct-write export path is mounted from `./obsidian-vault` to `/obsidian-vault` in the API container.
 - To remove containers and persisted SQLite data:
 
@@ -160,6 +160,7 @@ The database is a single SQLite file at **`api/prisma/dev.db`**. To back up: cop
 3. **Prisma client:** Run `cd api && npx prisma generate` after changing the schema.
 4. **Dev error details:** With `NODE_ENV` unset or not `production`, the API includes the underlying error message in the 500 response. Check the API terminal for full logs.
 5. **Docker startup race:** On first `docker compose up --build`, the app may load before API migrations finish. Wait a few seconds and refresh, or check `docker compose logs -f api`.
+6. **Docker: `Unknown argument toilType` (or similar) on save:** The API container must see `prisma/schema.prisma` from the image. If an older compose file mounted a volume over **all** of `/app/prisma`, the volume could hide the schema and `prisma generate` would produce a stale client. Current compose mounts only `sqlite/` for the DB file. Rebuild and recreate: `docker compose down && docker compose up --build`.
 
 ### Docker port conflict
 

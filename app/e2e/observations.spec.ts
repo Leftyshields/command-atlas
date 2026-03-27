@@ -26,7 +26,7 @@ test.describe("Observations", () => {
     await page.goto("/");
     await page.getByRole("banner").getByRole("button", { name: "Capture" }).click();
     const text = `Obs for edit delete ${Date.now()}`;
-    await page.getByPlaceholder("What did you notice?").fill(text);
+    await page.getByPlaceholder("Describe the manual work or steps").fill(text);
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Quick capture")).not.toBeVisible({ timeout: 5000 });
     await page.goto("/observations");

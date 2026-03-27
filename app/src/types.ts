@@ -40,6 +40,8 @@ export interface Observation {
   whyItMatters?: string | null;
   context?: string | null;
   observationType?: string | null;
+  toilType?: string | null;
+  frictionScore?: number | null;
   capturedAt: string;
   createdAt: string;
   updatedAt: string;

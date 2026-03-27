@@ -33,15 +33,17 @@ model System {
 }
 
 model Observation {
-  id              String   @id @default(cuid())
-  title           String?
-  observation     String
-  whyItMatters    String?  @map("why_it_matters")
-  context         String?
-  observationType  String?  @map("observation_type")
-  capturedAt      DateTime @default(now()) @map("captured_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                   String   @id @default(cuid())
+  title                String?
+  observation          String
+  whyItMatters         String?  @map("why_it_matters")
+  context              String?
+  observationType      String?  @map("observation_type")
+  toilType             String?  @map("toil_type")
+  frictionScore        Int?     @map("friction_score")
+  capturedAt           DateTime @default(now()) @map("captured_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 }
 
 model Relationship {

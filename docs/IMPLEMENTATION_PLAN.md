@@ -260,7 +260,7 @@ Search: case-insensitive partial match on defined fields; min length 2.
   - [x] Initialize repo: `api/` (Node + TypeScript + Express or Fastify), `app/` (Vite + React + TypeScript).
   - [x] Add Tailwind to app; add and configure shadcn/ui (init with Tailwind).
   - [x] Configure app proxy to `/api` → backend port (e.g. 4000).
-  - [ ] Optional: Docker Compose for PostgreSQL + backend (and optionally app) for one-command run.
+  - [x] Optional: Docker Compose for local one-command run (app + API + SQLite volume; see repo `docker-compose.yml` and README — not PostgreSQL for v1 default).
   - [x] README with: install deps, set DATABASE_URL, run migrations, start api, start app.
 
 ### Epic 2: Database schema + Prisma — Done

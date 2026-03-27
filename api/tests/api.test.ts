@@ -202,6 +202,44 @@ describe("Observations", () => {
     expect(res.body.error.length).toBeGreaterThan(0);
   });
 
+  it("POST /api/observations - creates with toil tracking fields", async () => {
+    const res = await api.post("/api/observations").send({
+      observation: "Manual deploy steps",
+      toilType: "Manual Deployment/Release",
+      frictionScore: 4,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.toilType).toBe("Manual Deployment/Release");
+    expect(res.body.frictionScore).toBe(4);
+  });
+
+  it("POST /api/observations - rejects invalid toilType", async () => {
+    const res = await api.post("/api/observations").send({
+      observation: "Valid",
+      toilType: "Not a real type",
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /api/observations - rejects frictionScore out of range", async () => {
+    const res = await api.post("/api/observations").send({
+      observation: "Valid",
+      frictionScore: 6,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("PATCH /api/observations/:id - clears frictionScore with null", async () => {
+    const created = await api.post("/api/observations").send({
+      observation: "x",
+      frictionScore: 3,
+    });
+    const id = created.body.id;
+    const res = await api.patch(`/api/observations/${id}`).send({ frictionScore: null });
+    expect(res.status).toBe(200);
+    expect(res.body.frictionScore).toBeNull();
+  });
+
   it("PATCH /api/observations/:id - sets observationType", async () => {
     const created = await api.post("/api/observations").send({ observation: "No type" });
     const id = created.body.id;

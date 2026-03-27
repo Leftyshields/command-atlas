@@ -187,6 +187,8 @@ async function buildExportFiles(): Promise<{
       "",
       `- Captured: ${toIso(obs.capturedAt)}`,
       obs.observationType ? `- Type: ${obs.observationType}` : "",
+      obs.toilType ? `- Toil type: ${obs.toilType}` : "",
+      obs.frictionScore != null ? `- Friction score: ${obs.frictionScore}` : "",
       "",
       section("Observation", [obs.observation]),
       obs.whyItMatters ? section("Why It Matters", [obs.whyItMatters]) : "",

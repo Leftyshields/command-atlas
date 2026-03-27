@@ -8,7 +8,7 @@ export const searchRouter = Router();
 // SQLite: Prisma "contains" → LIKE '%q%'; SQLite LIKE is case-insensitive for ASCII by default.
 // Postgres: use mode: "insensitive" when provider is not SQLite.
 
-const OBS_FIELDS = ["title", "observation", "whyItMatters", "context"] as const;
+const OBS_FIELDS = ["title", "observation", "whyItMatters", "context", "toilType"] as const;
 const PERSON_FIELDS = ["name", "title", "team", "department", "notes"] as const;
 const SYSTEM_FIELDS = ["name", "category", "ownerTeam", "description", "notes"] as const;
 
