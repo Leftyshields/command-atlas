@@ -4,6 +4,12 @@ Private leadership intelligence for technical leaders entering a new organizatio
 
 **Design and backlog:** See `.ai/context/design_decisions.md`. Implementation follows the execution plan in `.ai/context/execution_plan.md`. Shared technical references: `docs/REACT_PATTERNS.md`, `docs/DATA_FORMAT_REFERENCE.md`.
 
+### Solo, local-first by design
+
+Command Atlas is aimed at **one person** using it **on their own machine** (or an equivalent local setup such as Docker on your workstation). Data stays under your control; the stack assumes a **low-trust network boundary**—for example localhost or a private container network—not the public internet.
+
+**If you grow beyond that**—shared hosting, remote access, multiple users, importing data from untrusted parties, or anything that widens who can reach the API—treat security as a **first-class requirement**: authentication, transport protection (TLS), careful validation of uploads and backups, secrets handling, and operational hardening appropriate to the threat model. The current codebase optimizes for simplicity and local trust; **do not reuse that implicit model** when you expand scope.
+
 ## Prerequisites
 
 - Node 18+
