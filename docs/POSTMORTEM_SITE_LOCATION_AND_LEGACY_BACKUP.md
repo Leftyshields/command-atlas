@@ -32,3 +32,4 @@
 
 - Keep **post-import repair** (or migrate-after-import) for additive schema as long as import copies DDL from arbitrary backups.
 - Document **reference data** (SiteLocation) in README: seeded by migrations, optional manual SQL for advanced cases.
+- **Privacy:** Real site names/codes must not live in application source or committed migrations; use neutral placeholder rows in the repo and customize data only in local/production databases.

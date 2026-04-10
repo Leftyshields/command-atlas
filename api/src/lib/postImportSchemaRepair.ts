@@ -3,6 +3,8 @@ import Database from "better-sqlite3";
 /**
  * After importing an older SQLite backup, the live schema may lack `SiteLocation`
  * and/or `Person.location` while the Prisma client expects them. Repair in place.
+ * Default `SiteLocation` rows match the neutral seed in
+ * `20260410224810_seed_site_locations` (placeholder codes/labels only).
  */
 export function repairSchemaAfterSqliteImport(mainPath: string): void {
   const db = new Database(mainPath);
@@ -16,11 +18,11 @@ export function repairSchemaAfterSqliteImport(mainPath: string): void {
     `);
     db.exec(`
       INSERT OR IGNORE INTO "SiteLocation" ("code", "label", "sort_order") VALUES
-        ('HT', 'Hawthorne', 0),
-        ('CC', 'Cape Canaveral', 1),
-        ('SE', 'Seattle', 2),
-        ('BA', 'Bastrop', 3),
-        ('ST', 'Starbase', 4);
+        ('LOC01', 'Location 1', 0),
+        ('LOC02', 'Location 2', 1),
+        ('LOC03', 'Location 3', 2),
+        ('LOC04', 'Location 4', 3),
+        ('LOC05', 'Location 5', 4);
     `);
 
     const cols = db.prepare(`PRAGMA table_info("Person")`).all() as { name: string }[];

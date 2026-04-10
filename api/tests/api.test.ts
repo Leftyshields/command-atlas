@@ -345,10 +345,10 @@ describe("People", () => {
   it("POST /api/people - creates with valid location", async () => {
     const res = await api.post("/api/people").send({
       name: "Site Person",
-      location: "HT",
+      location: "LOC01",
     });
     expect(res.status).toBe(201);
-    expect(res.body.location).toBe("HT");
+    expect(res.body.location).toBe("LOC01");
   });
 
   it("POST /api/people - rejects invalid location", async () => {
@@ -363,9 +363,9 @@ describe("People", () => {
   it("PATCH /api/people/:id - sets and clears location", async () => {
     const created = await api.post("/api/people").send({ name: "Loc Patch" });
     expect(created.status).toBe(201);
-    const setLoc = await api.patch(`/api/people/${created.body.id}`).send({ location: "SE" });
+    const setLoc = await api.patch(`/api/people/${created.body.id}`).send({ location: "LOC03" });
     expect(setLoc.status).toBe(200);
-    expect(setLoc.body.location).toBe("SE");
+    expect(setLoc.body.location).toBe("LOC03");
     const cleared = await api.patch(`/api/people/${created.body.id}`).send({ location: null });
     expect(cleared.status).toBe(200);
     expect(cleared.body.location).toBeNull();
@@ -378,10 +378,10 @@ describe("People", () => {
   });
 
   it("GET /api/people/:id - returns location when set", async () => {
-    const created = await api.post("/api/people").send({ name: "Has Loc", location: "BA" });
+    const created = await api.post("/api/people").send({ name: "Has Loc", location: "LOC04" });
     const get = await api.get(`/api/people/${created.body.id}`);
     expect(get.status).toBe(200);
-    expect(get.body.location).toBe("BA");
+    expect(get.body.location).toBe("LOC04");
   });
 
   it("GET /api/people/:id - 404 for bad id", async () => {
@@ -544,10 +544,10 @@ describe("Search", () => {
   });
 
   it("GET /api/search?q= - finds person by location code substring", async () => {
-    await api.post("/api/people").send({ name: "Seattle Worker", location: "SE" });
-    const res = await api.get("/api/search?q=se");
+    await api.post("/api/people").send({ name: "Worker With Loc", location: "LOC03" });
+    const res = await api.get("/api/search?q=03");
     expect(res.status).toBe(200);
-    expect(res.body.people.some((p: { location?: string | null }) => p.location === "SE")).toBe(true);
+    expect(res.body.people.some((p: { location?: string | null }) => p.location === "LOC03")).toBe(true);
   });
 });
 

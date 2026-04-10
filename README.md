@@ -20,7 +20,7 @@ Command Atlas is aimed at **one person** using it **on their own machine** (or a
 
 ### Site locations (reference data)
 
-People may have an optional **site location** (e.g. Hawthorne, Seattle). Allowed sites live in the **`SiteLocation`** table (`code`, `label`, `sort_order`), not in application source. `Person.location` stores the chosen **code** and references `SiteLocation`.
+People may have an optional **site location** (a label shown in the UI; the stored value is a **code** referencing **`SiteLocation`**). Allowed codes and labels live in the **`SiteLocation`** table (`code`, `label`, `sort_order`), not in application TypeScript. The repository ships **neutral placeholder** rows in the seed migration (e.g. `LOC01` … `Location 1`); **replace or extend those rows in your own database** with whatever codes and labels fit your environment (direct SQL or a new migration). Do not commit real site names or codes if you treat them as sensitive.
 
 **How locations get into the database (normal path)**
 
@@ -32,9 +32,11 @@ People may have an optional **site location** (e.g. Hawthorne, Seattle). Allowed
 
    For local development you can use `npx prisma migrate dev` instead; both apply pending migrations.
 
-2. The **seed rows** for the default five sites (HT, CC, SE, BA, ST) are defined in the migration `api/prisma/migrations/20260410224810_seed_site_locations/migration.sql` (`INSERT OR IGNORE …`). You do **not** need a separate seed script for locations unless you want custom data.
+2. The **seed rows** for five placeholder sites are defined in the migration `api/prisma/migrations/20260410224810_seed_site_locations/migration.sql` (`INSERT OR IGNORE …`). You do **not** need a separate seed script unless you want different initial data.
 
-3. **Docker:** Use the same migration flow inside the API container / image so `SiteLocation` exists before serving traffic.
+3. **If `prisma migrate deploy` reports a checksum error** on `20260410224810_seed_site_locations` (e.g. after the seed migration file was updated), treat it as a **local dev database** issue: back up `dev.db` if needed, remove it or recreate it, then run migrations again. Production databases should follow your normal migration playbook.
+
+4. **Docker:** Use the same migration flow inside the API container / image so `SiteLocation` exists before serving traffic.
 
 **Changing or adding locations later**
 

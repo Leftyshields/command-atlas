@@ -32,7 +32,7 @@ API and frontend use the same JSON field names (camelCase). Dates are ISO 8601.
 
 **GET person / list responses:** `location` is `string | null`. Responses may include **`siteLocation`**: `{ code, label }` when joined for display.
 
-**GET /api/site-locations** — Returns `{ code, label, sortOrder }[]` for dropdowns (ordered). Allowed codes and labels are **stored in the database** (reference rows inserted by migrations), not hardcoded in application source.
+**GET /api/site-locations** — Returns `{ code, label, sortOrder }[]` for dropdowns (ordered). Allowed codes and labels are **stored in the database** (reference rows inserted by migrations), not hardcoded in application source. The shipped seed uses neutral placeholder codes (`LOC01`, …); replace them in your database with codes and labels appropriate to your deployment.
 
 **Changing locations:** Add or edit rows in `SiteLocation` (e.g. new migration with `INSERT`, or direct SQL against your SQLite file). Restart not required; app reads from DB at request time.
 
