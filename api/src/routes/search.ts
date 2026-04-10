@@ -9,7 +9,7 @@ export const searchRouter = Router();
 // Postgres: use mode: "insensitive" when provider is not SQLite.
 
 const OBS_FIELDS = ["title", "observation", "whyItMatters", "context", "toilType"] as const;
-const PERSON_FIELDS = ["name", "title", "team", "department", "notes"] as const;
+const PERSON_FIELDS = ["name", "title", "team", "department", "notes", "location"] as const;
 const SYSTEM_FIELDS = ["name", "category", "ownerTeam", "description", "notes"] as const;
 
 const isSqlite = () => (process.env.DATABASE_URL ?? "").startsWith("file:");
@@ -40,6 +40,7 @@ searchRouter.get("/", async (req, res) => {
         },
         orderBy: { name: "asc" },
         take: 50,
+        include: { siteLocation: { select: { code: true, label: true } } },
       }),
       prisma.system.findMany({
         where: {

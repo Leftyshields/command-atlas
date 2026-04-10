@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Reference data: rows are inserted by migrations / seed (not hardcoded in app logic).
+model SiteLocation {
+  code      String   @id
+  label     String
+  sortOrder Int      @default(0) @map("sort_order")
+  people    Person[]
+}
+
 model Person {
   id              String    @id @default(cuid())
   name            String
@@ -14,6 +22,9 @@ model Person {
   team            String?
   department      String?
   notes           String?
+  /// FK to SiteLocation.code
+  location        String?   @map("location")
+  siteLocation    SiteLocation? @relation(fields: [location], references: [code])
   managerId       String?   @map("manager_id")
   manager         Person?   @relation("ReportsTo", fields: [managerId], references: [id])
   directReports   Person[]  @relation("ReportsTo")

@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { prisma } from "../lib/prisma.js";
+import { repairSchemaAfterSqliteImport } from "../lib/postImportSchemaRepair.js";
 import { getResolvedSqliteDatabasePath } from "../lib/sqliteDatabasePath.js";
 import { logError } from "../lib/logger.js";
 
@@ -120,6 +121,8 @@ function importFromBackupAttached(mainPath: string, srcPath: string): void {
   } finally {
     db.close();
   }
+
+  repairSchemaAfterSqliteImport(mainPath);
 }
 
 backupRouter.get("/download", (_req, res) => {

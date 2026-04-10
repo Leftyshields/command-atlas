@@ -13,7 +13,9 @@ test.describe("Observations", () => {
     await page.goto("/");
     await page.getByRole("banner").getByRole("button", { name: "Capture" }).click();
     const text = `Obs for detail ${Date.now()}`;
-    await page.getByPlaceholder(/what did you notice/i).fill(text);
+    await page
+      .getByPlaceholder(/describe the manual work|what did you notice/i)
+      .fill(text);
     await page.getByRole("button", { name: /^save$/i }).click();
     await expect(page.getByRole("heading", { name: /quick capture/i })).not.toBeVisible();
     await page.goto("/observations");

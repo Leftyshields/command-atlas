@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { logError } from "../lib/logger.js";
+import { resolveLocationInput } from "../lib/personLocation.js";
 import { prisma } from "../lib/prisma.js";
 
 export const peopleRouter = Router();
@@ -22,7 +23,10 @@ peopleRouter.get("/", async (_req, res) => {
     const list = await prisma.person.findMany({
       orderBy: { name: "asc" },
       take: 500,
-      include: { manager: { select: { id: true, name: true, title: true } } },
+      include: {
+        manager: { select: { id: true, name: true, title: true } },
+        siteLocation: { select: { code: true, label: true } },
+      },
     });
     res.json(list);
   } catch (e) {
@@ -38,6 +42,7 @@ peopleRouter.get("/:id", async (req, res) => {
       include: {
         manager: { select: { id: true, name: true, title: true, team: true } },
         directReports: { select: { id: true, name: true, title: true, team: true } },
+        siteLocation: { select: { code: true, label: true } },
       },
     });
     if (!person) return res.status(404).json({ error: "Person not found" });
@@ -66,10 +71,12 @@ function validateManagerId(managerId: unknown, selfId?: string): { ok: true } | 
 
 peopleRouter.post("/", async (req, res) => {
   try {
-    const { name, title, team, department, managerId, notes } = req.body;
+    const { name, title, team, department, managerId, notes, location } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ error: "name is required" });
     }
+    const locParsed = await resolveLocationInput(prisma, location);
+    if (!locParsed.ok) return res.status(400).json({ error: locParsed.error });
     const validation = validateManagerId(managerId);
     if (!validation.ok) return res.status(validation.status).json({ error: validation.error });
     let resolvedManagerId: string | null = null;
@@ -85,8 +92,10 @@ peopleRouter.post("/", async (req, res) => {
         team: team?.trim() ?? null,
         department: department?.trim() ?? null,
         notes: notes?.trim() ?? null,
+        location: locParsed.value,
         managerId: resolvedManagerId,
       },
+      include: { siteLocation: { select: { code: true, label: true } } },
     });
     res.status(201).json(person);
   } catch (e) {
@@ -99,13 +108,18 @@ peopleRouter.patch("/:id", async (req, res) => {
   try {
     const existing = await prisma.person.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: "Person not found" });
-    const { name, title, team, department, managerId, notes } = req.body;
+    const { name, title, team, department, managerId, notes, location } = req.body;
     const data: Record<string, unknown> = {};
     if (typeof name === "string") data.name = name.trim();
     if (title !== undefined) data.title = title?.trim() ?? null;
     if (team !== undefined) data.team = team?.trim() ?? null;
     if (department !== undefined) data.department = department?.trim() ?? null;
     if (notes !== undefined) data.notes = notes?.trim() ?? null;
+    if (Object.prototype.hasOwnProperty.call(req.body, "location")) {
+      const locParsed = await resolveLocationInput(prisma, location);
+      if (!locParsed.ok) return res.status(400).json({ error: locParsed.error });
+      data.location = locParsed.value;
+    }
     if (managerId !== undefined) {
       const validation = validateManagerId(managerId, req.params.id);
       if (!validation.ok) return res.status(validation.status).json({ error: validation.error });
@@ -119,7 +133,11 @@ peopleRouter.patch("/:id", async (req, res) => {
         data.managerId = managerId.trim();
       }
     }
-    const person = await prisma.person.update({ where: { id: req.params.id }, data: data as never });
+    const person = await prisma.person.update({
+      where: { id: req.params.id },
+      data: data as never,
+      include: { siteLocation: { select: { code: true, label: true } } },
+    });
     res.json(person);
   } catch (e) {
     logError("Failed to update person", e);

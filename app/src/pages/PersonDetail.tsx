@@ -4,7 +4,8 @@ import { SafeMarkdown } from "../components/SafeMarkdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ReportingStructure } from "../components/people/ReportingStructure";
 import { api } from "../lib/api";
-import type { Person } from "../types";
+import { personLocationLabel } from "../lib/personLocation";
+import type { Person, SiteLocationOption } from "../types";
 
 export function PersonDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,9 +21,23 @@ export function PersonDetail() {
     queryFn: () => api.get<Person[]>("/people"),
     enabled: !!id && !!person,
   });
+
+  const { data: siteLocations = [] } = useQuery({
+    queryKey: ["site-locations"],
+    queryFn: () => api.get<SiteLocationOption[]>("/site-locations"),
+    staleTime: 60 * 60 * 1000,
+  });
   const [editing, setEditing] = useState(false);
   const [managerFilter, setManagerFilter] = useState("");
-  const [form, setForm] = useState({ name: "", title: "", team: "", department: "", managerId: "", notes: "" });
+  const [form, setForm] = useState({
+    name: "",
+    title: "",
+    team: "",
+    department: "",
+    location: "",
+    managerId: "",
+    notes: "",
+  });
 
   const managerOptions = useMemo(() => {
     const others = peopleList.filter((p) => p.id !== id);
@@ -54,6 +69,7 @@ export function PersonDetail() {
         title: person.title ?? "",
         team: person.team ?? "",
         department: person.department ?? "",
+        location: person.location ?? "",
         managerId: person.managerId ?? "",
         notes: person.notes ?? "",
       });
@@ -88,13 +104,33 @@ export function PersonDetail() {
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
-            patch.mutate({ ...form, managerId: form.managerId.trim() || null });
+            patch.mutate({
+              ...form,
+              managerId: form.managerId.trim() || null,
+              location: form.location.trim() ? form.location : null,
+            });
           }}
         >
           <div><label className="block text-sm font-medium mb-1">Name *</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="w-full border rounded px-2 py-1.5 text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">Title</label><input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">Team</label><input value={form.team} onChange={(e) => setForm((p) => ({ ...p, team: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">Department</label><input value={form.department} onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
+          <div>
+            <label htmlFor="person-edit-location" className="block text-sm font-medium mb-1">Location</label>
+            <select
+              id="person-edit-location"
+              value={form.location}
+              onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
+              className="w-full border rounded px-2 py-1.5 text-sm"
+            >
+              <option value="">—</option>
+              {siteLocations.map((loc) => (
+                <option key={loc.code} value={loc.code}>
+                  {loc.label} ({loc.code})
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Manager</label>
             <input
@@ -124,6 +160,8 @@ export function PersonDetail() {
             <dt className="text-slate-500">Title</dt><dd>{person.title ?? "—"}</dd>
             <dt className="text-slate-500">Team</dt><dd>{person.team ?? "—"}</dd>
             <dt className="text-slate-500">Department</dt><dd>{person.department ?? "—"}</dd>
+            <dt className="text-slate-500">Location</dt>
+            <dd>{personLocationLabel(person)}</dd>
             <dt className="text-slate-500">Reports to</dt>
             <dd>{manager ? <Link to={`/people/${manager.id}`} className="hover:underline">{manager.name}</Link> : "—"}</dd>
           </dl>

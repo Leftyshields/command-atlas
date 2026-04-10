@@ -17,6 +17,7 @@ test.describe("People", () => {
     await expect(page).toHaveURL(/\/people\/[^/]+$/);
     await expect(page.getByRole("heading", { name })).toBeVisible();
   });
+
 });
 
 test.describe("Systems", () => {

@@ -311,6 +311,18 @@ describe("Observations", () => {
   });
 });
 
+describe("Site locations", () => {
+  it("GET /api/site-locations - returns seeded rows", async () => {
+    const res = await api.get("/api/site-locations");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    for (const row of res.body as { code: string; label: string; sortOrder: number }[]) {
+      expect(row).toMatchObject({ code: expect.any(String), label: expect.any(String), sortOrder: expect.any(Number) });
+    }
+  });
+});
+
 describe("People", () => {
   it("POST /api/people - requires name", async () => {
     const res = await api.post("/api/people").send({});
@@ -328,6 +340,48 @@ describe("People", () => {
     expect(res.body.name).toBe("Jane Doe");
     expect(res.body.title).toBe("Engineer");
     expect(res.body.team).toBe("Platform");
+  });
+
+  it("POST /api/people - creates with valid location", async () => {
+    const res = await api.post("/api/people").send({
+      name: "Site Person",
+      location: "HT",
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.location).toBe("HT");
+  });
+
+  it("POST /api/people - rejects invalid location", async () => {
+    const res = await api.post("/api/people").send({
+      name: "Bad Loc",
+      location: "XX",
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("location");
+  });
+
+  it("PATCH /api/people/:id - sets and clears location", async () => {
+    const created = await api.post("/api/people").send({ name: "Loc Patch" });
+    expect(created.status).toBe(201);
+    const setLoc = await api.patch(`/api/people/${created.body.id}`).send({ location: "SE" });
+    expect(setLoc.status).toBe(200);
+    expect(setLoc.body.location).toBe("SE");
+    const cleared = await api.patch(`/api/people/${created.body.id}`).send({ location: null });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.location).toBeNull();
+  });
+
+  it("PATCH /api/people/:id - rejects invalid location", async () => {
+    const created = await api.post("/api/people").send({ name: "Loc Bad" });
+    const patch = await api.patch(`/api/people/${created.body.id}`).send({ location: "ZZ" });
+    expect(patch.status).toBe(400);
+  });
+
+  it("GET /api/people/:id - returns location when set", async () => {
+    const created = await api.post("/api/people").send({ name: "Has Loc", location: "BA" });
+    const get = await api.get(`/api/people/${created.body.id}`);
+    expect(get.status).toBe(200);
+    expect(get.body.location).toBe("BA");
   });
 
   it("GET /api/people/:id - 404 for bad id", async () => {
@@ -487,6 +541,13 @@ describe("Search", () => {
     expect(res.status).toBe(200);
     expect(res.body.people.length).toBeGreaterThanOrEqual(1);
     expect(res.body.people.some((p: { name: string }) => p.name.includes("Alice"))).toBe(true);
+  });
+
+  it("GET /api/search?q= - finds person by location code substring", async () => {
+    await api.post("/api/people").send({ name: "Seattle Worker", location: "SE" });
+    const res = await api.get("/api/search?q=se");
+    expect(res.status).toBe(200);
+    expect(res.body.people.some((p: { location?: string | null }) => p.location === "SE")).toBe(true);
   });
 });
 

@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import JSZip from "jszip";
+import { personLocationBullet } from "./personLocation.js";
 import { prisma } from "./prisma.js";
 
 const OBS_SOURCE = "Observation";
@@ -111,7 +112,10 @@ async function buildExportFiles(): Promise<{
   observationsCount: number;
 }> {
   const [people, systems, observations, rels] = await Promise.all([
-    prisma.person.findMany({ orderBy: [{ name: "asc" }, { id: "asc" }] }),
+    prisma.person.findMany({
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      include: { siteLocation: { select: { code: true, label: true } } },
+    }),
     prisma.system.findMany({ orderBy: [{ name: "asc" }, { id: "asc" }] }),
     prisma.observation.findMany({ orderBy: [{ capturedAt: "desc" }, { id: "asc" }] }),
     prisma.relationship.findMany({ where: { sourceEntityType: OBS_SOURCE } }),
@@ -143,6 +147,7 @@ async function buildExportFiles(): Promise<{
       person.title ? `- Title: ${person.title}` : "",
       person.team ? `- Team: ${person.team}` : "",
       person.department ? `- Department: ${person.department}` : "",
+      personLocationBullet(person.location, person.siteLocation?.label) ?? "",
       "",
       person.notes ? section("Notes", [person.notes]) : "",
     ]

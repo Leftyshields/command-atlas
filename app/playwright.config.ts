@@ -14,10 +14,10 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "cd ../api && npm run dev",
+      command: "cd ../api && npx prisma migrate deploy && npm run dev",
       url: "http://localhost:4000/api/observations",
       reuseExistingServer: true,
-      timeout: 15_000,
+      timeout: 60_000,
     },
     {
       command: "npm run dev",

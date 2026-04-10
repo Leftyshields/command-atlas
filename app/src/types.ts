@@ -1,8 +1,22 @@
+export interface SiteLocationRef {
+  code: string;
+  label: string;
+}
+
+/** GET /api/site-locations */
+export interface SiteLocationOption {
+  code: string;
+  label: string;
+  sortOrder: number;
+}
+
 export interface PersonSummary {
   id: string;
   name: string;
   title?: string | null;
   team?: string | null;
+  location?: string | null;
+  siteLocation?: SiteLocationRef | null;
 }
 
 export interface Person {
@@ -11,6 +25,8 @@ export interface Person {
   title?: string | null;
   team?: string | null;
   department?: string | null;
+  location?: string | null;
+  siteLocation?: SiteLocationRef | null;
   notes?: string | null;
   managerId?: string | null;
   manager?: PersonSummary | null;

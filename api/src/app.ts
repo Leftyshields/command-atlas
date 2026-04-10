@@ -5,6 +5,7 @@ import { exportRouter } from "./routes/export.js";
 import { observationsRouter } from "./routes/observations.js";
 import { peopleRouter } from "./routes/people.js";
 import { searchRouter } from "./routes/search.js";
+import { siteLocationsRouter } from "./routes/siteLocations.js";
 import { systemsRouter } from "./routes/systems.js";
 
 export const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use("/api/observations", observationsRouter);
 app.use("/api/people", peopleRouter);
+app.use("/api/site-locations", siteLocationsRouter);
 app.use("/api/systems", systemsRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/backup", backupRouter);

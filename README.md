@@ -18,6 +18,35 @@ Command Atlas is aimed at **one person** using it **on their own machine** (or a
 
 **Database:** SQLite by default (no separate server). The DB file is created at `api/prisma/dev.db` when you run migrations. To use PostgreSQL instead, switch the Prisma provider and set `DATABASE_URL` in `api/.env`.
 
+### Site locations (reference data)
+
+People may have an optional **site location** (e.g. Hawthorne, Seattle). Allowed sites live in the **`SiteLocation`** table (`code`, `label`, `sort_order`), not in application source. `Person.location` stores the chosen **code** and references `SiteLocation`.
+
+**How locations get into the database (normal path)**
+
+1. **Run Prisma migrations** against your SQLite file (creates tables and applies SQL seeds):
+
+   ```bash
+   cd api && npx prisma migrate deploy
+   ```
+
+   For local development you can use `npx prisma migrate dev` instead; both apply pending migrations.
+
+2. The **seed rows** for the default five sites (HT, CC, SE, BA, ST) are defined in the migration `api/prisma/migrations/20260410224810_seed_site_locations/migration.sql` (`INSERT OR IGNORE …`). You do **not** need a separate seed script for locations unless you want custom data.
+
+3. **Docker:** Use the same migration flow inside the API container / image so `SiteLocation` exists before serving traffic.
+
+**Changing or adding locations later**
+
+- Prefer a **new migration** with additional `INSERT OR IGNORE` / `UPDATE` statements, or edit rows directly in SQLite (e.g. `sqlite3 api/prisma/dev.db`) if you accept manual ops. The UI loads options from **`GET /api/site-locations`** at runtime.
+
+**Backups and older database files**
+
+- A full **export** is a snapshot of the whole SQLite file (all tables, including `SiteLocation` when present).
+- **Import** rebuilds core app tables from the uploaded file’s schema. Restoring a backup taken **before** `SiteLocation` / `Person.location` existed could leave the live file out of sync with the current app until migrations or **post-import repair** run. The API runs **`repairSchemaAfterSqliteImport`** after a successful in-app import (see `api/src/lib/postImportSchemaRepair.ts`) to create `SiteLocation`, seed default rows, and add `Person.location` if missing. If you still see API errors after import, re-import once on the upgraded app or run `npx prisma migrate deploy` against that database file.
+
+Process notes: `docs/POSTMORTEM_SITE_LOCATION_AND_LEGACY_BACKUP.md`.
+
 ## Docker quick start (recommended for simple local install)
 
 This path works with Docker Desktop and OrbStack.
@@ -247,6 +276,10 @@ If Docker is unavailable, run API + app locally with Node and point API `DATABAS
 ### After restore, people/systems missing but observations look OK
 
 Usually **stale SQLite WAL sidecar files** (`dev.db-wal`, `dev.db-shm`) left next to a newly restored `dev.db`. Follow the restore steps above (stop API → copy → `rm` WAL/SHM → start API). All entities share one database file; there is no separate “people” restore step.
+
+### API 500 on `/api/people` (or “Failed to list people”) after backup import
+
+Often **schema mismatch**: the imported file predates a migration (for example **`SiteLocation`** or **`Person.location`**). **Re-import** the backup using the **Backup** page after upgrading to a build that includes post-import repair, or run `cd api && npx prisma migrate deploy` against the same `DATABASE_URL` file so migrations and seed SQL apply. See **Site locations (reference data)** above.
 
 ### "Failed to create observation" (500)
 

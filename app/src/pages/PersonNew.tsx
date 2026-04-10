@@ -2,18 +2,32 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import type { Person } from "../types";
+import type { Person, SiteLocationOption } from "../types";
 
 export function PersonNew() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ name: "", title: "", team: "", department: "", managerId: "", notes: "" });
+  const [form, setForm] = useState({
+    name: "",
+    title: "",
+    team: "",
+    department: "",
+    location: "",
+    managerId: "",
+    notes: "",
+  });
   const [managerFilter, setManagerFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const { data: people = [] } = useQuery({
     queryKey: ["people"],
     queryFn: () => api.get<Person[]>("/people"),
+  });
+
+  const { data: siteLocations = [] } = useQuery({
+    queryKey: ["site-locations"],
+    queryFn: () => api.get<SiteLocationOption[]>("/site-locations"),
+    staleTime: 60 * 60 * 1000,
   });
 
   const managerOptions = useMemo(() => {
@@ -27,6 +41,7 @@ export function PersonNew() {
       api.post<{ id: string }>("/people", {
         ...form,
         managerId: form.managerId.trim() || undefined,
+        location: form.location.trim() || undefined,
       }),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["people"] });
@@ -53,6 +68,22 @@ export function PersonNew() {
         <div><label className="block text-sm font-medium mb-1">Title</label><input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
         <div><label className="block text-sm font-medium mb-1">Team</label><input value={form.team} onChange={(e) => setForm((p) => ({ ...p, team: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
         <div><label className="block text-sm font-medium mb-1">Department</label><input value={form.department} onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))} className="w-full border rounded px-2 py-1.5 text-sm" /></div>
+        <div>
+          <label htmlFor="person-new-location" className="block text-sm font-medium mb-1">Location</label>
+          <select
+            id="person-new-location"
+            value={form.location}
+            onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
+            className="w-full border rounded px-2 py-1.5 text-sm"
+          >
+            <option value="">—</option>
+            {siteLocations.map((loc) => (
+              <option key={loc.code} value={loc.code}>
+                {loc.label} ({loc.code})
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="block text-sm font-medium mb-1">Manager</label>
           <input

@@ -45,3 +45,4 @@ app/test-results/
 docs/*
 !docs/REACT_PATTERNS.md
 !docs/DATA_FORMAT_REFERENCE.md
+!docs/POSTMORTEM_SITE_LOCATION_AND_LEGACY_BACKUP.md
