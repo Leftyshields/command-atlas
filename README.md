@@ -2,7 +2,7 @@
 
 Private leadership intelligence for technical leaders entering a new organization. A structured notebook and relationship map: capture observations, link people and systems, and surface patterns over time. Single-user, local-first. Not a CRM.
 
-**Design and backlog:** See `.ai/context/design_decisions.md` and `docs/IMPLEMENTATION_PLAN.md`. Implementation follows the execution plan in `.ai/context/execution_plan.md`.
+**Design and backlog:** See `.ai/context/design_decisions.md`. Implementation follows the execution plan in `.ai/context/execution_plan.md`. Shared technical references: `docs/REACT_PATTERNS.md`, `docs/DATA_FORMAT_REFERENCE.md`.
 
 ## Prerequisites
 

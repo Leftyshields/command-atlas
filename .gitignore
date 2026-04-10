@@ -40,3 +40,8 @@ backups/
 obsidian-vault/
 obsidian-export.zip
 app/test-results/
+
+# Documentation: ignore all under docs/ except shared reference docs (tracked explicitly)
+docs/*
+!docs/REACT_PATTERNS.md
+!docs/DATA_FORMAT_REFERENCE.md
