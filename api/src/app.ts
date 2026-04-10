@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import { backupRouter } from "./routes/backup.js";
 import { exportRouter } from "./routes/export.js";
 import { observationsRouter } from "./routes/observations.js";
 import { peopleRouter } from "./routes/people.js";
@@ -15,6 +16,7 @@ app.use("/api/observations", observationsRouter);
 app.use("/api/people", peopleRouter);
 app.use("/api/systems", systemsRouter);
 app.use("/api/search", searchRouter);
+app.use("/api/backup", backupRouter);
 app.use("/api/export", exportRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

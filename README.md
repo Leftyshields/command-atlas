@@ -144,6 +144,7 @@ curl -L "http://localhost:4000/api/export/obsidian.zip" -o command-atlas-obsidia
 | Location | Command | Description |
 |----------|---------|--------------|
 | root | `npm run test` | Run API tests then E2E (E2E needs API + app running) |
+| root | `npm run backup:db -- "<codename>"` | Canonical Docker backup: creates one portable `.db` file and `.md5` checksum in `backups/` |
 | api | `npm run test` | API integration tests (Vitest) |
 | api | `npm run dev` | Start API (tsx watch) |
 | api | `npm run db:migrate` | Run Prisma migrations |
@@ -163,9 +164,83 @@ npx prisma migrate reset   # drops DB, reapplies migrations, optionally runs see
 
 ## Backup
 
-The database is a single SQLite file at **`api/prisma/dev.db`**. To back up: copy this file (e.g. to `api/prisma/backups/dev-YYYYMMDD.db` or another folder). Recommend doing this periodically—the app is your leadership notebook and losing the file would be painful. Optional: add a script (e.g. `npm run backup` in `api/`) that copies the file to a dated path.
+### In-app backup (web UI)
+
+With the API and app running, open **Backup** in the header (`/backup`). **Download** saves a full SQLite `.db` snapshot; **import** replaces all application data from a compatible backup file (export first if you need to keep the current database). For deep recovery steps and WAL sidecar handling when replacing files on disk, see below.
+
+**Canonical mode:** use Docker as the source of truth for runtime + backup.
+Sync model is **single active machine at a time**, with **on-demand manual** backup + upload.
+
+Run exactly one backup command from repo root:
+
+```bash
+npm run backup:db -- "spring-harbor"
+```
+
+What it does:
+- Runs **SQLite `.backup`** inside the API container against `/app/sqlite/dev.db` so the snapshot is consistent even if the app is writing (better than copying the raw file while SQLite is open).
+- Writes backup file to `backups/command-atlas-<UTC timestamp>-<codename>.db`
+- Writes checksum to `backups/command-atlas-<UTC timestamp>-<codename>.db.md5`
+- Prints the MD5 hash in terminal for quick validation
+
+If the script says `sqlite3 is not available in the API container`, rebuild the API image once: `docker compose build --no-cache api` (the image installs the `sqlite3` CLI for backups).
+
+If you omit the codename, the script auto-generates a human-readable codename.
+
+### Transfer to another machine
+
+Move/upload the single `.db` backup file to the other machine:
+
+`backups/command-atlas-<timestamp>-<codename>.db`
+
+Optional but recommended: move the matching `.md5` file too and verify after transfer.
+
+### Verify backup integrity
+
+```bash
+cd backups
+md5sum -c "command-atlas-<timestamp>-<codename>.db.md5"
+```
+
+### Restore on another machine (Docker mode)
+
+SQLite may create sidecar files next to the DB (`dev.db-wal`, `dev.db-shm`) when using WAL mode. If you replace only `dev.db` but leave old WAL/SHM files behind, SQLite can show **wrong or partial data** (for example missing **people** or **systems**) because the journal no longer matches the new main file. Always remove those sidecars after copying a restored `dev.db`.
+
+1. Stop the API so nothing holds the DB open:
+
+```bash
+docker compose stop api
+```
+
+2. Copy your backup over the live DB file:
+
+```bash
+docker cp "backups/command-atlas-<timestamp>-<codename>.db" "$(docker compose ps -q api):/app/sqlite/dev.db"
+```
+
+3. Remove stale WAL/SHM files on the same volume (safe if missing):
+
+```bash
+docker compose run --rm --no-deps api sh -lc 'rm -f /app/sqlite/dev.db-wal /app/sqlite/dev.db-shm'
+```
+
+4. Start API again:
+
+```bash
+docker compose up -d api
+```
+
+5. Verify data: open **People** and **Systems** as well as observations — all live in the same SQLite file, so they should match the backup.
+
+### No-Docker fallback (if work machine is restricted)
+
+If Docker is unavailable, run API + app locally with Node and point API `DATABASE_URL` to the transferred `.db` file path. Keep the same single-file handoff model (`.db` + optional `.md5`). After placing the file, delete any `dev.db-wal` and `dev.db-shm` next to it before starting the API, for the same WAL reason as Docker.
 
 ## Troubleshooting
+
+### After restore, people/systems missing but observations look OK
+
+Usually **stale SQLite WAL sidecar files** (`dev.db-wal`, `dev.db-shm`) left next to a newly restored `dev.db`. Follow the restore steps above (stop API → copy → `rm` WAL/SHM → start API). All entities share one database file; there is no separate “people” restore step.
 
 ### "Failed to create observation" (500)
 
@@ -216,6 +291,16 @@ docker compose up --build
 ### TypeError in console
 
 If you see "Cannot convert undefined or null to object" after a failed request, ensure the backend returns JSON error bodies (e.g. `{ "error": "message" }`) and that the API URL/port matches the app proxy in `vite.config.ts`.
+
+### UI change not visible after pull
+
+If you added a new nav link/page (for example **Backup**) but cannot see it in the browser:
+
+1. Hard refresh the page (`Ctrl+Shift+R` / `Cmd+Shift+R`).
+2. Restart the app dev server (`cd app && npm run dev`).
+3. If using Docker, rebuild and restart (`docker compose up --build`).
+
+Vite/Docker can occasionally serve stale assets after branch switches or dependency changes.
 
 ## Tech stack
 

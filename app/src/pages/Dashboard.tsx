@@ -55,6 +55,12 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2">
+          <Link
+            to="/backup"
+            className="px-3 py-1.5 border border-slate-300 text-slate-700 text-sm rounded hover:bg-slate-50"
+          >
+            Backup & restore
+          </Link>
           <button
             type="button"
             onClick={downloadObsidianZip}

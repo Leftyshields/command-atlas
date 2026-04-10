@@ -433,4 +433,55 @@ Search: case-insensitive partial match on defined fields; min length 2.
 
 ---
 
+## 11. EPH-20260327-SRETOIL: Quick Capture — SRE toil observations (backlog)
+
+**capture_issue:** `EPH-20260327-SRETOIL` — pull this section when running capture_issue for SRE Quick Capture work.
+
+**Relationship to shipped work (EPH-20260327-T01):** The app already persists **`toilType`** and **`frictionScore`** on `Observation`, with Quick Capture / detail UI and a fixed toil-type enum. This epic **extends** that: add **`isAutomatable`**, **`timeEstimate`**, conditional visibility for toil fields, label/placeholder refinements, friction-score end labels, and modal scrolling. Reconcile with any product decision to **not** duplicate removed `automation_potential` unless `isAutomatable` is intentionally new.
+
+**Role / intent:** Senior Frontend Engineer / SRE Tooling Specialist — update Quick Capture for SRE toil discovery.
+
+### 1. Schema and state updates
+
+- Extend the observation model (Prisma + API + app types) with optional fields:
+  - **`toilType`:** `String` (enum; same closed list as today unless expanded).
+  - **`frictionScore`:** `Number` (1–5) — already present; ensure create/patch/search/export stay consistent.
+  - **`isAutomatable`:** `Boolean` (new).
+  - **`timeEstimate`:** `Number` (minutes; new).
+
+### 2. Quick Capture UI
+
+- **Toil type:** `Select` labeled **Toil Type**, placed below **Observation type**. Options: Manual Scaling (O(n)), Alert Fatigue/Noise, Configuration Drift, Manual Deployment/Release, Credential/Access Management, Incident Firefighting, Legacy Infrastructure Care, Handoff/Ticket Friction.
+  - **Logic:** Show or emphasize this control only when **Observation type** is **Friction** or **Toil** (note: **`toil` is not in `OBSERVATION_TYPE_VALUES` today** — add enum + migration + labels, or scope to `friction` only per product call).
+- **Friction score:** Horizontal radio group **Friction Score (1–5)** with buttons 1–5; sub-labels **1 (Minor)** and **5 (Blocker)** at the ends.
+- **Automation:** Checkbox/toggle **Potential for Atlas Automation?** → maps to **`isAutomatable`**.
+- **Time estimate:** Small numeric input **Est. Minutes** → **`timeEstimate`**.
+
+### 3. Label refinement (discovery mode)
+
+Replace/refine copy in Quick Capture (and align observation detail edit where applicable):
+
+| Current / field | Target label | Placeholder |
+|-----------------|--------------|-------------|
+| Main body | **Action Observed** | What did the team do manually? |
+| `whyItMatters` | **Toil Cost / Impact** | How did this affect the mission or engineering flow? |
+| `context` | **Trigger / Catalyst** | e.g., Launch Prep, P0 Incident, Weekly Maintenance |
+
+### 4. Persistence
+
+- Wire **`handleSave` / `onSubmit`** (and API POST/PATCH + Zod) so all new fields are included and stored.
+
+### 5. Styling
+
+- Use existing Tailwind patterns; keep the modal responsive; add **internal scroll** if extra fields increase height.
+
+### Acceptance criteria (suggested)
+
+- [ ] DB + API + types include `isAutomatable` and `timeEstimate` (and boolean/null semantics documented).
+- [ ] Quick Capture shows toil-type + friction + automation + time fields per visibility rules; labels and placeholders match the table above.
+- [ ] Friction score shows 1 (Minor) / 5 (Blocker) hints.
+- [ ] Saves persist all fields; observation detail and Obsidian export updated if required by product.
+
+---
+
 **End of implementation plan.** Use this plus `.ai/context/design_decisions.md` as the single source of truth for v1 build and backlog.

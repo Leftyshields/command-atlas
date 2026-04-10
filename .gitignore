@@ -28,6 +28,7 @@ yarn-error.log*
 api/prisma/*.db
 api/prisma/*.db-journal
 api/prisma/backups/
+backups/
 
 # Local AI workflow context (not for public repo)
 .ai/context/

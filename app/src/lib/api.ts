@@ -42,4 +42,41 @@ export const api = {
       }
       throw new Error(msg);
     }),
+
+  /** Full SQLite backup download (browser triggers save via blob URL). */
+  downloadDatabaseBackup: async (): Promise<void> => {
+    const res = await fetch(BASE + "/backup/download");
+    if (!res.ok) {
+      const text = await res.text();
+      let message = res.statusText;
+      if (text) {
+        try {
+          const body = JSON.parse(text) as { error?: string };
+          if (body?.error) message = body.error;
+        } catch {
+          // keep statusText
+        }
+      }
+      throw new Error(message);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition");
+    let filename = "command-atlas-backup.db";
+    const m = disposition?.match(/filename="([^"]+)"/);
+    if (m?.[1]) filename = m[1];
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
+
+  importDatabaseBackup: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return fetch(BASE + "/backup/import", { method: "POST", body: fd }).then((r) => handleRes<{ ok: boolean }>(r));
+  },
 };

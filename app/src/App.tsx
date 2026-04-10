@@ -6,6 +6,7 @@ import { ObservationsList } from "./pages/ObservationsList";
 import { PersonDetail } from "./pages/PersonDetail";
 import { PeopleList } from "./pages/PeopleList";
 import { PersonNew } from "./pages/PersonNew";
+import { BackupPage } from "./pages/BackupPage";
 import { SearchPage } from "./pages/SearchPage";
 import { SystemDetail } from "./pages/SystemDetail";
 import { SystemsList } from "./pages/SystemsList";
@@ -15,20 +16,28 @@ function Layout({ children }: { children: React.ReactNode }) {
   const { openCapture } = useCapture();
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-4">
-        <Link to="/" className="font-semibold text-slate-800">
+      <header className="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Link to="/" className="font-semibold text-slate-800 shrink-0">
           Command Atlas
         </Link>
-        <nav className="flex gap-3 text-sm">
+        <nav className="flex flex-wrap gap-3 text-sm min-w-0">
           <Link to="/" className="text-slate-600 hover:text-slate-900">Dashboard</Link>
           <Link to="/observations" className="text-slate-600 hover:text-slate-900">Observations</Link>
           <Link to="/people" className="text-slate-600 hover:text-slate-900">People</Link>
           <Link to="/systems" className="text-slate-600 hover:text-slate-900">Systems</Link>
           <Link to="/search" className="text-slate-600 hover:text-slate-900">Search</Link>
         </nav>
-        <button type="button" onClick={openCapture} className="ml-auto px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700">
-          Capture
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-2 shrink-0">
+          <Link
+            to="/backup"
+            className="px-3 py-1.5 border border-slate-300 text-slate-700 text-sm rounded hover:bg-slate-50"
+          >
+            Backup
+          </Link>
+          <button type="button" onClick={openCapture} className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700">
+            Capture
+          </button>
+        </div>
       </header>
       <main className="flex-1 p-4 max-w-5xl mx-auto w-full">{children}</main>
     </div>
@@ -49,6 +58,7 @@ export default function App() {
       <Route path="/systems/new" element={<Layout><SystemNew /></Layout>} />
       <Route path="/systems/:id" element={<Layout><SystemDetail /></Layout>} />
       <Route path="/search" element={<Layout><SearchPage /></Layout>} />
+      <Route path="/backup" element={<Layout><BackupPage /></Layout>} />
     </Routes>
     </CaptureProvider>
   );

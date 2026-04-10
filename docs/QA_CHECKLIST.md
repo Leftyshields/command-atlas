@@ -17,6 +17,7 @@
 - **Validation tests:** Forms often use both HTML5 `required` and custom validation. To test custom error messages, trigger a submit that passes HTML5 but fails custom validation (e.g. fill spaces only), so the JS validation runs.
 - **Before adding new E2E:** Run the existing E2E suite first; fix any strict-mode or selector failures in current tests, then add new tests.
 - **Duplicate text on page:** When the same text appears in multiple elements (e.g. entity name in heading and in a card), use a scoped selector (e.g. `getByRole('heading', { name })`) to avoid strict-mode violations.
+- **Capture textarea selector drift:** If capture tests timeout on a placeholder selector, scope to the Quick Capture dialog first and allow both known placeholder strings in this repo (for example `/what did you notice|describe the manual work or steps/i`).
 
 ## Manual checklist
 
@@ -239,6 +240,22 @@ Manual checklist for creating and linking a new Person or System from within the
 20. - [ ] **Labels clear:** "Name *" indicates required; "Title", "Team", "Category", "Owner team" are clearly optional.
 21. - [ ] **Loading state:** While **Save and link** is in progress, button shows "Saving…" (or similar) and is disabled; user cannot double-submit.
 22. - [ ] **No navigation:** After creating a person or system inline, the app does not navigate to People or Systems page; user stays in the Capture modal.
+
+---
+
+## Docker DB backup / restore (portability)
+
+**Prerequisites:** `docker compose` works; API image rebuilt after `sqlite3` was added to `api/Dockerfile` if backups use `.backup` inside the container.
+
+### Happy path
+- [ ] **Web UI (`/backup`):** Download produces a `.db` file; import (after checking the confirmation box) replaces app data with that backup; Dashboard / lists reflect the restored data.
+- [ ] `npm run backup:db -- "qa-backup"` completes; `backups/*.db` and `*.md5` exist; `md5sum -c` reports OK.
+- [ ] **Restore (Docker):** Follow README: `docker compose stop api` → `docker cp` backup to `/app/sqlite/dev.db` → `docker compose run --rm --no-deps api sh -lc 'rm -f /app/sqlite/dev.db-wal /app/sqlite/dev.db-shm'` → `docker compose up -d api`.
+- [ ] After restore, open **People**, **Systems**, and **Observations** — counts and sample rows match what you expect from the backup (all tables live in one SQLite file).
+
+### Edge cases / failure states
+- [ ] If you **skip** removing `dev.db-wal` / `dev.db-shm` after copying a new `dev.db`, note whether data looks wrong; then run the `rm` step and confirm **People** (and systems) reappear as expected.
+- [ ] API stopped during copy; no silent partial file state.
 
 ---
 

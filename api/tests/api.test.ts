@@ -490,6 +490,62 @@ describe("Search", () => {
   });
 });
 
+describe("Database backup", () => {
+  it("GET /api/backup/download - returns SQLite file", async () => {
+    const res = await request(app)
+      .get("/api/backup/download")
+      .buffer(true)
+      .parse((res2, callback) => {
+        const chunks: Buffer[] = [];
+        res2.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+        res2.on("end", () => callback(null, Buffer.concat(chunks)));
+      });
+    expect(res.status).toBe(200);
+    expect(res.headers["content-disposition"]).toContain("attachment;");
+    const buf = res.body as Buffer;
+    expect(buf.subarray(0, 15).toString("utf8")).toBe("SQLite format 3");
+  });
+
+  it("POST /api/backup/import - requires file", async () => {
+    const res = await api.post("/api/backup/import").send({});
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /api/backup/import - rejects invalid database file", async () => {
+    const res = await request(app)
+      .post("/api/backup/import")
+      .attach("file", Buffer.from("not a sqlite file"), "bad.db");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it("POST /api/backup/import - restores data from prior export", async () => {
+    await api.post("/api/observations").send({ observation: "Snapshot A" });
+    const dl = await request(app)
+      .get("/api/backup/download")
+      .buffer(true)
+      .parse((res2, callback) => {
+        const chunks: Buffer[] = [];
+        res2.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+        res2.on("end", () => callback(null, Buffer.concat(chunks)));
+      });
+    expect(dl.status).toBe(200);
+
+    await api.post("/api/observations").send({ observation: "Snapshot B" });
+    const before = await api.get("/api/observations");
+    expect(before.body.length).toBe(2);
+
+    const imp = await request(app)
+      .post("/api/backup/import")
+      .attach("file", dl.body as Buffer, "restore.db");
+    expect(imp.status).toBe(200);
+
+    const after = await api.get("/api/observations");
+    expect(after.body.length).toBe(1);
+    expect(after.body[0].observation).toBe("Snapshot A");
+  });
+});
+
 describe("Obsidian export", () => {
   it("POST /api/export/obsidian - requires OBSIDIAN_VAULT_ROOT", async () => {
     const prev = process.env.OBSIDIAN_VAULT_ROOT;

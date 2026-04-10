@@ -39,7 +39,7 @@ const optionalNullableTrimmedString = z
 
 const observationCreateSchema = z.object({
   observation: z
-    .string({ required_error: "observation is required" })
+    .string()
     .transform((s) => s.trim())
     .pipe(z.string().min(1, "observation is required").max(OBS_TEXT_MAX_LENGTH)),
   title: z.string().optional().transform((s) => (s != null && s !== "" ? s.trim() : undefined)),
