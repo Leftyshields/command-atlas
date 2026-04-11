@@ -321,6 +321,96 @@ describe("Site locations", () => {
       expect(row).toMatchObject({ code: expect.any(String), label: expect.any(String), sortOrder: expect.any(Number) });
     }
   });
+
+  it("POST /api/site-locations - creates and GET includes row", async () => {
+    const code = `T_${Date.now()}`;
+    const created = await api.post("/api/site-locations").send({
+      code,
+      label: "Test Site",
+      sortOrder: 42,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({ code, label: "Test Site", sortOrder: 42 });
+    const list = await api.get("/api/site-locations");
+    expect(list.status).toBe(200);
+    expect((list.body as { code: string }[]).some((r) => r.code === code)).toBe(true);
+  });
+
+  it("POST /api/site-locations - rejects label over max length", async () => {
+    const code = `LONG_${Date.now()}`;
+    const res = await api.post("/api/site-locations").send({
+      code,
+      label: "x".repeat(300),
+      sortOrder: 0,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("label");
+  });
+
+  it("POST /api/site-locations - rejects duplicate code", async () => {
+    const code = `DUP_${Date.now()}`;
+    const first = await api.post("/api/site-locations").send({ code, label: "One", sortOrder: 0 });
+    expect(first.status).toBe(201);
+    const second = await api.post("/api/site-locations").send({ code, label: "Two", sortOrder: 1 });
+    expect(second.status).toBe(409);
+    expect(second.body.error).toBeTruthy();
+  });
+
+  it("PATCH /api/site-locations/:code - updates label and sortOrder", async () => {
+    const code = `P_${Date.now()}`;
+    await api.post("/api/site-locations").send({ code, label: "Before", sortOrder: 0 });
+    const patch = await api
+      .patch(`/api/site-locations/${encodeURIComponent(code)}`)
+      .send({ label: "After", sortOrder: 7 });
+    expect(patch.status).toBe(200);
+    expect(patch.body).toMatchObject({ code, label: "After", sortOrder: 7 });
+  });
+
+  it("PATCH /api/site-locations/:code - 404 when missing", async () => {
+    const res = await api.patch("/api/site-locations/NONEXISTENT_XYZ_999").send({ label: "x" });
+    expect(res.status).toBe(404);
+  });
+
+  it("PATCH /api/site-locations/:code - renames code and updates person.location (FK cascade)", async () => {
+    const oldC = `RN_${Date.now()}`;
+    const newC = `${oldC}_NEW`;
+    await api.post("/api/site-locations").send({ code: oldC, label: "Rename me", sortOrder: 0 });
+    const person = await api.post("/api/people").send({ name: "On Site", location: oldC });
+    expect(person.status).toBe(201);
+    const patch = await api
+      .patch(`/api/site-locations/${encodeURIComponent(oldC)}`)
+      .send({ code: newC, label: "Renamed label", sortOrder: 1 });
+    expect(patch.status).toBe(200);
+    expect(patch.body).toMatchObject({ code: newC, label: "Renamed label", sortOrder: 1 });
+    const get = await api.get(`/api/people/${person.body.id}`);
+    expect(get.body.location).toBe(newC);
+  });
+
+  it("PATCH /api/site-locations/:code - 409 when rename collides with existing code", async () => {
+    const a = `PA_${Date.now()}`;
+    const b = `PB_${Date.now()}`;
+    await api.post("/api/site-locations").send({ code: a, label: "A", sortOrder: 0 });
+    await api.post("/api/site-locations").send({ code: b, label: "B", sortOrder: 1 });
+    const patch = await api.patch(`/api/site-locations/${encodeURIComponent(b)}`).send({ code: a, label: "B" });
+    expect(patch.status).toBe(409);
+  });
+
+  it("DELETE /api/site-locations/:code - removes row and clears person location", async () => {
+    const code = `DEL_${Date.now()}`;
+    await api.post("/api/site-locations").send({ code, label: "To remove", sortOrder: 0 });
+    const person = await api.post("/api/people").send({ name: "Has Site", location: code });
+    expect(person.status).toBe(201);
+    const del = await api.delete(`/api/site-locations/${encodeURIComponent(code)}`);
+    expect(del.status).toBe(204);
+    const get = await api.get(`/api/people/${person.body.id}`);
+    expect(get.status).toBe(200);
+    expect(get.body.location).toBeNull();
+  });
+
+  it("DELETE /api/site-locations/:code - 404 when missing", async () => {
+    const res = await api.delete("/api/site-locations/NONEXISTENT_DEL_999");
+    expect(res.status).toBe(404);
+  });
 });
 
 describe("People", () => {

@@ -7,6 +7,9 @@ import { PersonDetail } from "./pages/PersonDetail";
 import { PeopleList } from "./pages/PeopleList";
 import { PersonNew } from "./pages/PersonNew";
 import { BackupPage } from "./pages/BackupPage";
+import { LocationDetail } from "./pages/LocationDetail";
+import { LocationNew } from "./pages/LocationNew";
+import { LocationsList } from "./pages/LocationsList";
 import { SearchPage } from "./pages/SearchPage";
 import { SystemDetail } from "./pages/SystemDetail";
 import { SystemsList } from "./pages/SystemsList";
@@ -25,6 +28,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <Link to="/observations" className="text-slate-600 hover:text-slate-900">Observations</Link>
           <Link to="/people" className="text-slate-600 hover:text-slate-900">People</Link>
           <Link to="/systems" className="text-slate-600 hover:text-slate-900">Systems</Link>
+          <Link to="/locations" className="text-slate-600 hover:text-slate-900">Locations</Link>
           <Link to="/search" className="text-slate-600 hover:text-slate-900">Search</Link>
         </nav>
         <div className="ml-auto flex flex-wrap items-center gap-2 shrink-0">
@@ -57,6 +61,9 @@ export default function App() {
       <Route path="/systems" element={<Layout><SystemsList /></Layout>} />
       <Route path="/systems/new" element={<Layout><SystemNew /></Layout>} />
       <Route path="/systems/:id" element={<Layout><SystemDetail /></Layout>} />
+      <Route path="/locations" element={<Layout><LocationsList /></Layout>} />
+      <Route path="/locations/new" element={<Layout><LocationNew /></Layout>} />
+      <Route path="/locations/:code" element={<Layout><LocationDetail /></Layout>} />
       <Route path="/search" element={<Layout><SearchPage /></Layout>} />
       <Route path="/backup" element={<Layout><BackupPage /></Layout>} />
     </Routes>

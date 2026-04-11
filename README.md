@@ -20,7 +20,7 @@ Command Atlas is aimed at **one person** using it **on their own machine** (or a
 
 ### Site locations (reference data)
 
-People may have an optional **site location** (a label shown in the UI; the stored value is a **code** referencing **`SiteLocation`**). Allowed codes and labels live in the **`SiteLocation`** table (`code`, `label`, `sort_order`), not in application TypeScript. The repository ships **neutral placeholder** rows in the seed migration (e.g. `LOC01` … `Location 1`); **replace or extend those rows in your own database** with whatever codes and labels fit your environment (direct SQL or a new migration). Do not commit real site names or codes if you treat them as sensitive.
+People may have an optional **site location** (a label shown in the UI; the stored value is a **code** referencing **`SiteLocation`**). Allowed codes and labels live in the **`SiteLocation`** table (`code`, `label`, `sort_order`), not in application TypeScript. Use the app’s **Locations** page (**`/locations`**) to add, edit labels/sort order, or delete site locations without opening the database. The repository ships **neutral placeholder** rows in the seed migration (e.g. `LOC01` … `Location 1`); you can replace or extend those rows via the UI, or with direct SQL / a new migration if you prefer bulk or scripted changes. Do not commit real site names or codes if you treat them as sensitive.
 
 **How locations get into the database (normal path)**
 
@@ -40,7 +40,8 @@ People may have an optional **site location** (a label shown in the UI; the stor
 
 **Changing or adding locations later**
 
-- Prefer a **new migration** with additional `INSERT OR IGNORE` / `UPDATE` statements, or edit rows directly in SQLite (e.g. `sqlite3 api/prisma/dev.db`) if you accept manual ops. The UI loads options from **`GET /api/site-locations`** at runtime.
+- **In-app (usual):** Open **Locations** in the nav, then add a row or open one to edit **code**, **label**, and **sort order** (renaming **code** updates people assigned to that site via the database FK). Deleting a location clears that assignment on any people who had it.
+- **Migrations / SQL (bulk or automation):** Prefer a **new migration** with additional `INSERT OR IGNORE` / `UPDATE` statements, or edit rows directly in SQLite (e.g. `sqlite3 api/prisma/dev.db`) if you accept manual ops. The People UI loads options from **`GET /api/site-locations`** at runtime.
 
 **Backups and older database files**
 

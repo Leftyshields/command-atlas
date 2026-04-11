@@ -32,9 +32,18 @@ API and frontend use the same JSON field names (camelCase). Dates are ISO 8601.
 
 **GET person / list responses:** `location` is `string | null`. Responses may include **`siteLocation`**: `{ code, label }` when joined for display.
 
-**GET /api/site-locations** — Returns `{ code, label, sortOrder }[]` for dropdowns (ordered). Allowed codes and labels are **stored in the database** (reference rows inserted by migrations), not hardcoded in application source. The shipped seed uses neutral placeholder codes (`LOC01`, …); replace them in your database with codes and labels appropriate to your deployment.
+**GET /api/site-locations** — Returns `{ code, label, sortOrder }[]` for dropdowns (ordered). Allowed codes and labels are **stored in the database** (reference rows inserted by migrations and/or the in-app CRUD below), not hardcoded in application source. The shipped seed uses neutral placeholder codes (`LOC01`, …); you can edit or replace them in the **Locations** UI or in the database.
 
-**Changing locations:** Add or edit rows in `SiteLocation` (e.g. new migration with `INSERT`, or direct SQL against your SQLite file). Restart not required; app reads from DB at request time.
+**Site location CRUD (`SiteLocation`):**
+
+| Method | Path | Body | Status | Notes |
+|--------|------|------|--------|--------|
+| GET | `/api/site-locations` | — | 200 | List all rows, ordered by `sortOrder` then `code`. |
+| POST | `/api/site-locations` | `code` (string, required), `label` (string, required), `sortOrder` (integer, optional, default `0`) | 201 | Returns created `{ code, label, sortOrder }`. Duplicate `code` → **409**. `code` max **64** chars, `label` max **256** (enforced). |
+| PATCH | `/api/site-locations/:code` | `code` (optional), `label` and/or `sortOrder` (optional). **Rename:** send `code` with the new value; people’s `location` updates via FK **ON UPDATE CASCADE**. | 200 | Returns updated row. Unknown path `code` → **404**. Empty `code`/`label` → **400**. Duplicate new `code` → **409**. `label` max **256** chars. |
+| DELETE | `/api/site-locations/:code` | — | 204 | Deletes row. People with this `location` get **`location` set to null** (FK). Unknown `code` → **404**. |
+
+**Changing locations (bulk / automation):** For mass edits on a new clone, you can still use a new migration with `INSERT` / `UPDATE`, or direct SQL against your SQLite file. No restart required; the app reads from the DB at request time.
 
 ## System
 
