@@ -113,6 +113,12 @@ npm run dev   # starts Vite on http://localhost:5173, proxies /api to API
 
 Open http://localhost:5173. Use **Capture** to add observations; add **People** and **Systems** first to link from observations.
 
+### People list (`/people`)
+
+The People table is **sorted and filtered in the app** using the full list from **`GET /api/people`** (client-side only; no extra query parameters). Column headers cycle **ascending → descending → original order** and show a sort indicator. Use the filter row to narrow by **name**, **title**, **team**, **location**, and **manager** (including empty values where applicable). Click a **manager name** to filter to people who report to that manager; use the small **open** icon beside the name to open that manager’s person page. Icons use **`lucide-react`**.
+
+Process notes: `docs/POSTMORTEM_PEOPLE_LIST_UX.md`.
+
 ## Observations and toil tracking
 
 Observations hold the main text plus optional metadata (title, **observation type**, links to people/systems). You can also record **operational toil** so repetitive or scaling manual work is easier to spot later:
